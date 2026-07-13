@@ -1,50 +1,25 @@
 pipeline {
-
     agent any
-
+ 
+    environment {
+        GIT_REPO = 'https://github.com/DeekshithSN/sample-web-application.git'
+    }
+ 
     stages {
-
-        stage('Checkout') {
+        stage('List Git Branches') {
             steps {
-                echo 'Checking out source code'
-                checkout scm
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Building application'
-                sh 'echo Build started'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'Running tests'
-                sh 'echo Tests completed'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploying application'
-                sh 'echo Deployment completed'
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-creds',
+                    usernameVariable: 'GIT_USERNAME',
+                    passwordVariable: 'GIT_PASSWORD'
+                )]) {
+                    sh '''
+                        REPO_URL=$(echo $GIT_REPO | sed "s#https://#https://$GIT_USERNAME:$GIT_PASSWORD@#")
+ 
+                        echo "Available Branches:"
+                        git ls-remote --heads $REPO_URL | awk '{print $2}' | sed 's#refs/heads/##'
+                    '''
+                }
             }
         }
     }
-
-    post {
-
-        success {
-            echo 'Build completed successfully'
-        }
-
-        failure {
-            echo 'Build failed'
-        }
-
-        always {
-            echo 'Pipeline execution finished'
-        }
-    }
-}
